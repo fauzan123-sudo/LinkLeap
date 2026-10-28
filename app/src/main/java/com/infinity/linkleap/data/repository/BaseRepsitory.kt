@@ -2,6 +2,7 @@ package com.infinity.linkleap.data.repository
 
 import com.infinity.linkleap.data.model.TransferProgress
 import com.infinity.linkleap.utils.Resource
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -22,12 +23,14 @@ abstract class BaseRepository {
 
         try {
             val progressCallback: (Long, Long) -> Unit = { sent, total ->
-                onProgress?.invoke(TransferProgress(sent, total))  // ✅ Langsung invoke tanpa runBlocking
+                onProgress?.invoke(TransferProgress(sent, total))
             }
 
             val result = block(progressCallback)
             emit(Resource.Success(result))
 
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: ConnectException) {
             Timber.e(e, "NetworkTransferError: ${e.message}")
             emit(Resource.Error("Gagal terhubung ke penerima"))
@@ -46,6 +49,3 @@ abstract class BaseRepository {
         }
     }.flowOn(Dispatchers.IO)
 }
-
-
-

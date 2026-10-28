@@ -10,7 +10,9 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -20,6 +22,9 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import timber.log.Timber
 import java.util.concurrent.Executors
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import java.util.concurrent.atomic.AtomicBoolean
 
 @androidx.annotation.OptIn(ExperimentalGetImage::class)
 @Composable
@@ -34,6 +39,9 @@ fun CameraPreviewWithScanner(
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
     val scanner = remember { BarcodeScanning.getClient() }
+    val handled = remember { AtomicBoolean(false) }
+    val scanning by rememberUpdatedState(isScanning)
+    val currentOnScan by rememberUpdatedState(onScanSuccess)
 
     DisposableEffect(Unit) {
         onDispose {
@@ -69,7 +77,7 @@ fun CameraPreviewWithScanner(
                 .build()
 
             imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
-                if (!isScanning) {
+                if (!scanning || handled.get()) {
                     imageProxy.close()
                     return@setAnalyzer
                 }
@@ -94,7 +102,9 @@ fun CameraPreviewWithScanner(
                                         val port = parts.getOrNull(1)?.toIntOrNull()
 
                                         if (ip != null && port != null) {
-                                            onScanSuccess(ip, port)
+                                            if (handled.compareAndSet(false, true)) {
+                                                currentOnScan(ip, port)
+                                            }
                                         } else {
                                             Timber.w("Invalid QR format: $value")
                                         }

@@ -35,6 +35,7 @@ import androidx.navigation.NavHostController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.infinity.linkleap.data.model.AppInfo
+import com.infinity.linkleap.data.model.SendItem
 import com.infinity.linkleap.ui.common.composable.LoadingIndicator
 import com.infinity.linkleap.ui.screen.send.installed.AppItem
 import com.infinity.linkleap.ui.screen.send.installed.BottomActionBar
@@ -43,6 +44,7 @@ import com.infinity.linkleap.ui.viewmodel.SendViewModel
 import com.infinity.linkleap.utils.categorizeApps
 import com.infinity.linkleap.utils.findLocalApkFiles
 import com.infinity.linkleap.utils.loadInstalledApps
+import com.infinity.linkleap.utils.toSafeFileName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -271,15 +273,14 @@ fun AppListScreen(
             BottomActionBar(
                 selectedCount = selectedApps.size,
                 onSendAll = {
-                    val selectedPaths = selectedApps.mapNotNull { pkg ->
-                        apps.find { it.packageName == pkg }?.apkPath
+                    val items = selectedApps.mapNotNull { pkg ->
+                        apps.find { it.packageName == pkg }?.let {
+                            SendItem(path = it.apkPath, name = "${it.name}.apk".toSafeFileName())
+                        }
                     }
+                    Timber.d("AppListScreen VM ${sendViewModel.hashCode()} -> ${items.size} file")
 
-                    // ✅ TAMBAHKAN LOG DI SINI
-                    Timber.d("📱 AppListScreen ViewModel: ${sendViewModel.hashCode()}")
-                    Timber.d("📦 Selected: ${selectedPaths.size} files")
-
-                    sendViewModel.setSelectedFiles(selectedPaths)
+                    sendViewModel.setSelectedFiles(items)
                     navController.navigate("send_qr_screen")
                     selectedApps = emptySet()
                 }

@@ -3,6 +3,7 @@ package com.infinity.linkleap.data.module
 import com.infinity.linkleap.data.network.FileReceiver
 import com.infinity.linkleap.data.network.FileSender
 import com.infinity.linkleap.data.repository.NetworkRepository
+import com.infinity.linkleap.utils.TransferNotifier
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,8 +33,9 @@ object AppModule {
     @Singleton
     fun provideNetworkRepository(
         sender: FileSender,
-        receiver: FileReceiver
+        receiver: FileReceiver,
+        notifier: TransferNotifier
     ): NetworkRepository {
-        return NetworkRepository(sender, receiver)
+        return NetworkRepository(sender, receiver, notifier)
     }
 }

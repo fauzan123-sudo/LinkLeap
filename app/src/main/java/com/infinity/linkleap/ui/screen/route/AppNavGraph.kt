@@ -29,12 +29,12 @@ fun AppNavGraph() {
 
         // 📤 Halaman pengiriman awal
         composable("home") {
-            HomeScreen(navController)
+            HomeScreen(navController, sendViewModel)
         }
 
         // 📥 Halaman penerimaan
         composable("receive") {
-            ReceiveScreen()
+            ReceiveScreen(onDone = { navController.popBackStack() })
         }
 
         // 📱 Daftar aplikasi yang akan dikirim
